@@ -33,9 +33,15 @@ export default class LoginScreen extends Component{
         isLoading: true,
         hasEmail: '',
         clickButton: false,
-        refreshing: false 
+        refreshing: false,
+        // ipAddress: "192.168.254.116:8000",
+        // ipAddressWithNoPort: "192.168.254.116"
+        // ipAddress: "192.168.50.114:8000",  
+        // ipAddressWithNoPort: "192.168.50.114"
+        ipAddress: "192.168.83.2:8000",
+        ipAddressWithNoPort: "192.168.83.2"
       }
-      this.fetchAsync()
+      this.fetchAsync();
   }
 
   fetchAsync = async() => {
@@ -45,6 +51,7 @@ export default class LoginScreen extends Component{
         })
     }).done();
   }   
+  
 
   _onRefresh = () => {
     this.setState({refreshing: true});
@@ -77,7 +84,7 @@ export default class LoginScreen extends Component{
     
     if(email != "" && password != ""){
       // fetch("http://192.168.254.116:8000/loginPiggy",{  
-      fetch("http://192.168.83.2:8000/loginPiggy",{  
+      fetch("http://" + this.state.ipAddress + "/loginPiggy",{  
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,6 +104,8 @@ export default class LoginScreen extends Component{
           });
           // this.props.navigation.setParams({ email: responseData })
           AsyncStorage.setItem('email', responseData);
+          AsyncStorage.setItem('ipAddress', this.state.ipAddress);
+          AsyncStorage.setItem('ipAddressWithNoPort', this.state.ipAddressWithNoPort);
           // this.props.navigation.navigate('Dashboard');
           this.props.navigation.navigate('Dashboard', {email: responseData});  
           !this.isCancelled &&  this.setState({
@@ -164,7 +173,7 @@ export default class LoginScreen extends Component{
                     { this.state.clickButton == false ?  " LOGIN" :  " LOADING..." }
                 </FontAwesome>   
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => this.props.navigation.navigate('Register')}>
+              <TouchableOpacity onPress={() => this.props.navigation.navigate('Register', {ipAddress: this.state.ipAddress})}>
                 <FontAwesome style={styles.registerText}>SIGN UP</FontAwesome>
               </TouchableOpacity>  
             </View>

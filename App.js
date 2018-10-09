@@ -32,6 +32,7 @@ import WithdrawalScreen from './screens/WithdrawalScreen';
 import LogoutScreen from './screens/LogoutScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import PremiumScreen from './screens/PremiumScreen';
+import ReferralScreen from './screens/ReferralScreen';
 
 import modalScreen from './screens/modal';
 
@@ -61,25 +62,25 @@ const AppStackNavigator = createStackNavigator({
 })
 
 const Drawer = createDrawerNavigator({ 
-    // Welcome: {
-    //     screen: WelcomeScreen,
-    //      navigationOptions: {
-    //       drawerLockMode: 'locked-closed'
-    //     }
-    // },
-    // Login: {
-    //     screen: LoginScreen,
-    //      navigationOptions: {
-    //       header: 'none',
-    //       drawerLockMode: 'locked-closed'
-    //     }
-    //  },
-    //  Register: {
-    //     screen: RegisterScreen,
-    //      navigationOptions: {
-    //       drawerLockMode: 'locked-closed'
-    //     }
-    //  },
+    Welcome: {
+        screen: WelcomeScreen,
+         navigationOptions: {
+          drawerLockMode: 'locked-closed'
+        }
+    },
+    Login: {
+        screen: LoginScreen,
+         navigationOptions: {
+          header: 'none',
+          drawerLockMode: 'locked-closed'
+        }
+     },
+     Register: {
+        screen: RegisterScreen,
+         navigationOptions: {
+          drawerLockMode: 'locked-closed'
+        }
+     },
     Dashboard: DashboardScreen,
     MainDash: {
       screen: MainDashScreen,
@@ -87,16 +88,17 @@ const Drawer = createDrawerNavigator({
 
       })
     },
-    // Photo: PhotoScreen,
-    // Video: VideoScreen,
-    // Refer:ReferScreen,
-    // Survey: SurveyScreen,
-    // 'Account Details': PenTabNavigator,
-    // Password: PasswordScreen,
-    // 'Terms and Conditions': TermsScreen,
-    // Withdrawal: WithdrawalScreen,
-    // History: HistoryScreen,
-    // Withdraw: WithdrawalHistoryScreen,
+    Photo: PhotoScreen,
+    Video: VideoScreen,
+    Refer:ReferScreen,
+    Survey: SurveyScreen,
+    'Account Details': PenTabNavigator,
+    Password: PasswordScreen,
+    'Terms and Conditions': TermsScreen,
+    "Request Withdrawal": WithdrawalScreen,
+    History: HistoryScreen,
+    Referral: ReferralScreen,
+    Withdrawal: WithdrawalHistoryScreen,
     "Premium Account": PremiumScreen,
     Logout: LogoutScreen
   },

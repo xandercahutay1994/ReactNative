@@ -57,7 +57,6 @@ export default class SettingScreen extends Component {
 		 this.state = {
 	       initial: 'state',
 	       email: '',
-	       // email: "xandercahutay1994@gmail.com",
 	       token: '',
 	       firstname: '',
 	       lastname: '',
@@ -68,32 +67,48 @@ export default class SettingScreen extends Component {
 	       visibleModal: null,
 	       wAddress: '',
 	       clickBtn: false,
-	       env: 'Enter here'
+	       env: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+	       // env: 'here',
+           ipAddress: '',
 	    }
 		this.fetchAsync()
 	}
 
+	fetchAsync = async() => {
+		AsyncStorage.getItem("email").then((value) => {
+	      !this.isCancelled && this.setState({
+	        email: value
+	      });
+	    }).done();		
+    	AsyncStorage.getItem("ipAddressWithNoPort").then((value) => {
+	        !this.isCancelled && this.setState({
+	          ipAddress: value
+	        })
+			this.fetchData();
+	    }).done();
+    	AsyncStorage.getItem("subscription_type").then((value) => {
+	        this.setState({
+	          subscription_type: value
+	        })
+			this.fetchData();
+	    }).done();
+	}
+
 	componentDidUpdate(){
-		this.fetchData();
+		// this.fetchAsync();
 	}
 
 	componentWillUnmount(){
 		this.isCancelled = true;
 	}
 
-	fetchAsync = async() => {
-		AsyncStorage.getItem("email").then((value) => {
-	      this.setState({
-	        email: value
-	      });
-	    }).done();		
-	}
+	// https://coins.ph/m/join/pwzluz
 
 	fetchData = async() => {
 		email = this.state.email;
-		
-	 	// fetch("http://192.168.254.116:8000/penDetail",{  
-        fetch("http://192.168.83.2:8000/penDetail",{  	
+		const {ipAddress} = this.state;
+
+        fetch("http://" + ipAddress + ":8000/penDetail",{  	
 	        method: 'POST',
 	        headers: {
 	          'Content-Type': 'application/json',
@@ -115,6 +130,7 @@ export default class SettingScreen extends Component {
 					referCode: responseData.detail[0].referCode,
 					walletAddress: responseData.detail[0].walletAddress
 				});
+			this.fetchAsync();
 		}).catch(function(error) {
 			Alert.alert('Something is wrong with the(pennyer) server!');
 		});
@@ -154,14 +170,13 @@ export default class SettingScreen extends Component {
 	);
 
 	update = (walletAddress) => {
-		const {email} = this.state;
+		const {email,ipAddress} = this.state;
 
 		if(walletAddress != ""){
 
 			this.setState({ clickBtn: true })
 
-			// fetch("http://192.168.254.116:8000/updateWalletAdd/", { 
-			fetch("http://192.168.83.2:8000/updateWalletAdd/", {  
+			fetch("http://" + ipAddress + ":8000/updateWalletAdd/", {  
 		          method: 'POST',
 		          headers: {
 		            'Content-Type': 'application/json',
@@ -249,7 +264,13 @@ export default class SettingScreen extends Component {
 			             <View style={styles.cardNoData}>
 							<Card title="Eyes Here">
 								<Text style={styles.noDataInfo}>
-									Click your bitcoin address if you want to edit/update it
+									If you dont have a Coins.ph account yet. Just copy this url 
+								</Text>
+								<Text style={styles.link}>
+									https://coins.ph/m/join/pwzluz
+								</Text>
+								<Text style={styles.noDataInfo}>
+									Click your bitcoin address if you want to edit/update it. and register there easily.
 								</Text>
 							</Card>
 						</View>
@@ -266,9 +287,16 @@ const styles = StyleSheet.create({
 
 	cardNoData: {
 		padding: 0,
-		width: 300,
+		width: widthPercentageToDP(80),
 		alignSelf: 'center',
 		marginTop: 15
+	},
+
+	link:{
+		alignSelf: "center",
+		fontSize: 15,
+		color: "green",
+		lineHeight: 25
 	},
 
 	noDataInfo:{
@@ -290,15 +318,17 @@ const styles = StyleSheet.create({
 	},
 
 	walletAPI: {
-		fontSize: 17,
+		fontSize: 18,
 		right: 0,
-		justifyContent: 'flex-end',
-		textAlign: 'right',
+		marginLeft: widthPercentageToDP(12),
+		// justifyContent: 'flex-end',
+		// textAlign: 'right',
 		// paddingVertical: 2,
 		color: '#0ace55',
-		alignSelf: 'flex-end',
-		display: 'flex',
-		alignItems: 'flex-end'
+		marginBottom: '-2%'
+		// alignSelf: 'flex-end',
+		// display: 'flex',
+		// alignItems: 'flex-end'
 	},
 
 	update: {

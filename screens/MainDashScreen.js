@@ -23,7 +23,7 @@ import SettingScreen from './SettingScreen';
 import DashboardScreen from './DashboardScreen';
 import DrawerScreen from './DrawerScreen';
 import { YellowBox } from 'react-native';
-const routes = ["Dashboard", "Account Details", "Withdrawal", "Terms and Conditions", "Premium Account", "Logout"];
+const routes = ["Dashboard", "Account Details", "Request Withdrawal", "Terms and Conditions", "Premium Account", "Logout"];
 YellowBox.ignoreWarnings(['Warning: isMounted(...) is deprecated', 'Module RCTImageLoader']);
 
 
@@ -57,7 +57,6 @@ export default class MainDashScreen extends Component {
 			              alignItems: "center",
 			              marginTop: 10
 			            }}/>
-			         <Text style={styles.email}> {this.state.email} </Text>
 			         <List
 			         	style={styles.list}
 			            dataArray={routes}

@@ -43,39 +43,49 @@ export default class WithdrawalScreen extends Component {
 			pennyer_id: '',
 			amount: '',
 			email: '',
-			// email: "xandercahutay1994@gmail.com",
 			walletAddress: '',
 			clickBtn: '',
 			refreshing: false,
-			isRequest: false
+			isRequest: false,
+			ipAddress: ''
 		}
 		this.fetchAsync();
 	}
 
 	_onRefresh = () => {
 	    this.setState({refreshing: true});
-	    // this.setState({refreshing: false});
-		!this.isCancelled && this.setState({
+		this.setState({
 			amount: '',
 			clickBtn: false,
 			walletAddress: '',
 			refreshing: false,
 			pennyer_id: '',
-			isRequest: false
+			isRequest: false,
+			ipAddress: '',
+			earnings: '',
 		});
+		this.fetchData();
+		// this.componentDidUpdate();
 	 }
+
 
 	fetchAsync = async() => {
 		AsyncStorage.getItem("email").then((value) => {
-	      this.setState({
+	      !this.isCancelled && this.setState({
 	        email: value
 	      });
-	    }).done();		
+	    }).done();	
+
+		AsyncStorage.getItem("ipAddress").then((value) => {
+	        !this.isCancelled && this.setState({
+	          ipAddress: value
+	        })
+    		this.fetchData();
+			this.checkIfRequested();
+	    }).done();	
 	}
 
 	componentDidUpdate(){
-		this.fetchData();
-		this.checkIfRequested();
 	}
 
 	componentWillUnmount(){
@@ -84,10 +94,9 @@ export default class WithdrawalScreen extends Component {
 
 	fetchData = async() => {
 		email = this.state.email;
+		const{ipAddress} = this.state;
 
-
-		// fetch("http://192.168.254.116:8000/penDetail",{  	
-        fetch("http://192.168.83.2:8000/penDetail",{  	
+        fetch("http://" + ipAddress + "/penDetail",{  	
 	        method: 'POST',
 	        headers: {
 	          'Content-Type': 'application/json',
@@ -105,7 +114,7 @@ export default class WithdrawalScreen extends Component {
 				earnings: responseData.detail[0].totalEarned.toFixed(8),
 				walletAddress: responseData.detail[0].walletAddress
 			});
-			console.log(responseData)
+			this.fetchAsync();
 		}).catch(function(error) {
 			alert('Withdrawal Screen has an error in the server')
 		});
@@ -118,8 +127,9 @@ export default class WithdrawalScreen extends Component {
     checkIfRequested = async() => {
 
     	pennyer_id = this.state.pennyer_id;
+    	const{ipAddress} = this.state;
 
-    	fetch("http://192.168.83.2:8000/checkIfAlreadyRequest",{  	
+    	fetch("http://" + ipAddress + "/checkIfAlreadyRequest",{  	
 	        method: 'POST',
 	        headers: {
 	          'Content-Type': 'application/json',
@@ -133,7 +143,6 @@ export default class WithdrawalScreen extends Component {
 		.then((response) => response.json())
 		.then((responseData) => {
 			if(responseData.length > 0){
-				// alert('1')
 				!this.isCancelled && this.setState({
 					isRequest: true
 				})
@@ -149,24 +158,23 @@ export default class WithdrawalScreen extends Component {
 
     sendRequest = async(amount) => {
       	email = this.state.email;
-
+      	const{ipAddress} = this.state;
       	if(amount.length != ""){
       		let newAmount = "";
 
       		// if(amount >= 50 && amount < 100000){
-      		if(amount >= 10 && amount < 100000){
-      			newAmount = "0.0000" + amount;
+      		if(amount >= 50 && amount < 100000){
+      			newAmount = "0.000" + amount;
       		}else if(amount >= 100000 && amount <= 150000){
-      			newAmount = "0.00" + amount;
+      			newAmount = "0.00" + amount; 
       		}
 
   			try{
-	      		// if(newAmount <= this.state.earnings && amount >= 50){
+	      		if(newAmount <= this.state.earnings && amount >= 50){
 	      				this.setState({ clickBtn: true })
 			      		this.refs.defaultToast.showToast('Sending Request...');
 
-				        // fetch("http://192.168.254.116:8000/withdrawEarnings",{  	
-				        fetch("http://192.168.83.2:8000/withdrawEarnings",{  	
+				        fetch("http://" + ipAddress + "/withdrawEarnings",{  	
 					        method: 'POST',
 					        headers: {
 					          'Content-Type': 'application/json',
@@ -190,11 +198,10 @@ export default class WithdrawalScreen extends Component {
 							this.setState({clickBtn:false,refreshing:false})
 							Alert.alert('Something is wrong with the(withdrawal request screen) server!');
 						});
-		    		
-				// }else{
-				// 	alert("Amount to be requested must be greater than or equal to 50000 satoshi and not more than 150000" +
-				// 		"satoshi. Amount must be lesser than or equal to your total earnings also!");
-				// }	
+				}else{
+					alert("Amount to be requested must be greater than or equal to 50000 satoshi and not more than 150000" +
+						"satoshi. Amount must be lesser than or equal to your total earnings also!");
+				}	
 	  		}catch(e){
 				this.setState({clickBtn:false,refreshing:false});
       			Alert.alert(e)
@@ -379,7 +386,7 @@ const styles = StyleSheet.create({
 		alignSelf:  'center',
 		justifyContent: 'center',
 		lineHeight: 25,
-		color: 'green',
+		color: 'black',
 		fontSize: 15
 	},
 
@@ -388,7 +395,7 @@ const styles = StyleSheet.create({
 		alignSelf:  'center',
 		justifyContent: 'center',
 		lineHeight: 25,
-		color: 'green',
+		color: 'black',
 		fontSize: 15
 	},
 
@@ -482,7 +489,7 @@ const styles = StyleSheet.create({
 		backgroundColor: '#ceb25f',
 		padding: 7,
 		opacity: 0.8,
-		color: 'red',
+		color: 'black',
 		fontWeight: '100',
 		borderRadius: 3,
 		display: 'flex',
@@ -535,6 +542,6 @@ const styles = StyleSheet.create({
 		color: '#110200',
 		fontWeight: 'bold',
 		marginTop: '12%',
-		fontFamily: 'serif'
+		fontFamily: 'Helvetica'
 	}
 })

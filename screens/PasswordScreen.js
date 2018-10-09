@@ -32,13 +32,22 @@ export default class Password extends Component {
 			isRight: false,
 			email: '',
 	        clickButton: false,
-	        clickPass: false
+	        clickPass: false,
+            ipAddress: "",
 		}
+		this.fetchIpAdd();
 	}
+
+	fetchIpAdd = async() =>{
+		AsyncStorage.getItem("ipAddressWithNoPort").then((value) => {
+	        this.setState({
+	        	ipAddress: value
+	        })
+	    }).done();
+	}	
 
 	componentDidMount(){
      	this._isMounted = true;
-
  		AsyncStorage.getItem("email").then((value) => {
  			this.setState({email: value})
 	    }).done();
@@ -53,10 +62,10 @@ export default class Password extends Component {
 		if(password != ""){
 			this.setState({ clickButton: true });
 
-			const {email} = this.state;
+			const {email,ipAddress} = this.state;
 
 			// fetch("http://192.168.254.116:8000/checkPassword/", {  
-			fetch("http://192.168.83.2:8000/checkPassword/", {  
+			fetch("http://" + ipAddress + ":8000/checkPassword/", {  
 	          method: 'POST',
 	          headers: {
 	            'Content-Type': 'application/json',
@@ -94,15 +103,14 @@ export default class Password extends Component {
 	}
 
 	changePassword = async(newPassword,rePassword) => {
-		const {email} = this.state;
+		const {email,ipAddress} = this.state;
 
 		if(newPassword != "" && rePassword != ""){
 
 			if(newPassword == rePassword){
 				this.setState({ clickPass: true });
 
-				// fetch("http://192.168.254.116:8000/changePassword/", {  
-				fetch("http://192.168.83.2:8000/changePassword/", {  
+				fetch("http://" + ipAddress + ":8000/changePassword/", {  
 		          method: 'POST',
 		          headers: {
 		            'Content-Type': 'application/json',
@@ -241,7 +249,7 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 	    textAlign: "center",
 	    marginTop: '3%',
-	    fontFamily: 'serif'
+	    fontFamily: 'Helvetica'
 	},
 
 	label: {

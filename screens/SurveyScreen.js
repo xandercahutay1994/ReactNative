@@ -43,24 +43,24 @@ export default class SurveyScreen extends Component {
 		this.state ={
 			image: [],
 			surveyData: '',
-			// pennyer_id: 4,
 			amtEarned: '',
 			taskName: '',
 			btasks_id: '',
 			pennyer_id: this.props.navigation.state.params.pennyer_id,
-			// pennyer_id: 1,
 			taskPrice: '',
 			earnings: '',
 			hasData: '',
 			clicked: false,
 			isClicked: '',
 			clickUrl: '',
+			pennyer_btc: '',	
 			isCount: 5,
 			checked: '',
-	        refreshing: false 
-			// canGoBack: false,
-			// ref: null
+	        refreshing: false,
+            ipAddress: '',
+	        subscription_type: this.props.navigation.state.params.subscription_type 
 		}		
+		this.fetchIpAdd();
 	}
 
 	_onRefresh = () => {
@@ -68,22 +68,35 @@ export default class SurveyScreen extends Component {
 	    this.setState({
 	    	image: [],
 			url: '',
-			// pennyer_id: 4,
 			amtEarned: '',
 			taskName: '',
 			btasks_id: '',
 			pennyer_id: this.props.navigation.state.params.pennyer_id,
-			// pennyer_id: 1,
 			data: [],
 			isCount: 5,
 			checked: '',
 			taskPrice: '',	
 			earnings: '',
 			hasData: '',
+			pennyer_btc: '',	
 			clicked: false,
-	        refreshing: false
+	        refreshing: false,
+            ipAddress: '',
+	        subscription_type: this.props.navigation.state.params.subscription_type 
 	    })
-	    this.fetchData();
+	    this.fetchIpAdd();
+	}
+
+	fetchIpAdd = async() =>{
+		AsyncStorage.getItem("ipAddressWithNoPort").then((value) => {
+	        this.setState({
+	          ipAddress: value
+	        })
+			this.fetchData();
+			AsyncStorage.getItem("token").then((value) => {
+	 			this.setState({token: value})
+		    }).done();
+	    }).done();
 	}
 
 	componentDidMount(){	
@@ -91,8 +104,10 @@ export default class SurveyScreen extends Component {
 
 		if(this._isMounted){
 			// this.fetchData();
+			AsyncStorage.getItem("token").then((value) => {
+	 			this.setState({token: value})
+		    }).done();
 		}
-		this.fetchData();
 		// https://www.surveymonkey.com/mp/website-feedback-survey-template/
 		// https://www.snapsurveys.com/wh/siam/surveylanding/interviewer.asp
 	}
@@ -113,13 +128,12 @@ export default class SurveyScreen extends Component {
 
 
 	fetchData = async() => {
-		const {pennyer_id} = this.state;
+		const {pennyer_id,ipAddress} = this.state;
 		this.setState({
 			checked: false
 		})
 
-		// let resolve = await fetch('http://192.168.254.116:8000/postSurvey/' + pennyer_id,{
-		let resolve = await fetch('http://192.168.83.2:8000/postSurvey/' + pennyer_id,{
+		let resolve = await fetch("http://" + ipAddress + ":8000/postSurvey/" + pennyer_id,{
 			method: 'GET'
 		})
 		.then((response) => response.json())
@@ -201,16 +215,14 @@ export default class SurveyScreen extends Component {
 		Linking.openURL(decodeURIComponent(linkUrl));
 
 		var total = parseFloat(this.state.amtEarned) + parseFloat(priceEarned);
-
+		const {ipAddress} = this.state;
 		this.setState({
 			checked: true,
 			amtEarned: total.toFixed(8),
 			clicked: true
 		})
 
-		
-		// fetch("http://192.168.254.116:8000/performSurvey/", {  
-		fetch("http://192.168.83.2:8000/performSurvey/", {  
+		fetch("http://" + ipAddress + ":8000/performSurvey/", {  
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -299,6 +311,16 @@ export default class SurveyScreen extends Component {
 	    }).done();
 	}
 
+	emptyToken(){
+		const{subscription_type} = this.state;
+		if(subscription_type == 1){
+			return <Text style={styles.infoUnli}> Enjoy your unlimited visiting of videos 😀.</Text>
+		}else{
+			return <Text style={styles.info}> Take and finish the survey provided below to earn 10 Satoshi.
+										You can only visit 15 survey per day.</Text>
+		}
+	}
+
 	render(){
 		if(this.state.hasData){
 			if(this.state.isClicked == ""){
@@ -315,7 +337,7 @@ export default class SurveyScreen extends Component {
 							<View style={styles.cardInfo}>
 								<Card title="Eyes Here">
 									<Text style={styles.info}>
-										Take and finish the survey provided below to earn 10 Satoshi.
+										{this.emptyToken()}
 									</Text>
 								</Card>
 							</View>
@@ -328,7 +350,7 @@ export default class SurveyScreen extends Component {
 							            <Card
 							              title={rowData.taskName}
 						              	>
-							              	<TouchableOpacity onPress={()=> this.press(rowData.pennyer_id,rowData.id,rowData.task_price,rowData.taskMedia) }>
+							              	<TouchableOpacity onPress={()=> this.press(rowData.pennyer_id,rowData.id,rowData.pennyer_btc,rowData.taskMedia) }>
 												<FontAwesome style={styles.urlLink}> {decodeURIComponent(rowData.taskMedia)} </FontAwesome>
 											</TouchableOpacity>
 							            </Card>

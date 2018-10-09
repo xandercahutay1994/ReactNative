@@ -27,8 +27,8 @@ export default class ReferScreen extends Component {
 			receiverEmail: '',
 			senderEmail: '',
 			referCode: '',
-			clickBtn: false
-
+			clickBtn: false,
+			ipAddress: ''
 		}
 		this.fetchAsync()
 	}
@@ -46,6 +46,12 @@ export default class ReferScreen extends Component {
 	      });
 	    }).done();		
 
+		AsyncStorage.getItem("ipAddress").then((value) => {
+	        this.setState({
+	          ipAddress: value
+	        })
+	    }).done();	
+
 	}
 
 	componentWillUnmount(){
@@ -54,14 +60,13 @@ export default class ReferScreen extends Component {
 
 	send = async(receiverEmail) => {
       	senderEmail = this.state.senderEmail;
-
+      	const{ipAddress} = this.state;
       	if(receiverEmail != ""){
       	
       		this.setState({ clickBtn: true })
       		this.refs.defaultToast.showToast('Sending...');
 
-		 	// fetch("http://192.168.254.116:8000/referFriend",{  	
-	        fetch("http://192.168.83.2:8000/referFriend",{  	
+	        fetch("http://" + ipAddress + "/referFriend",{  	
 		        method: 'POST',
 		        headers: {
 		          'Content-Type': 'application/json',
@@ -172,7 +177,7 @@ const styles = StyleSheet.create({
 		fontSize: 20,
 		padding: 7,
 		fontWeight: 'bold',
-		fontFamily: 'serif'
+		fontFamily: 'Helvetica'
 	},
 
 	info: {

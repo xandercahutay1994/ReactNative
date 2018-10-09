@@ -50,11 +50,10 @@ export default class PremiumScreen extends Component {
 		this.state = {
 			earnings: '',
 			email: '',
-			// email: "angelicaaliguen@gmail.com",
 			clickBtn: '',
 			refreshing: false,
-			subscription_type: ''
-
+			subscription_type: '',
+			ipAddress: ''
 		}
 		this.fetchAsync()
 	}
@@ -66,20 +65,39 @@ export default class PremiumScreen extends Component {
 	        email: value
 	      });
 	    }).done();		
+      	AsyncStorage.getItem("ipAddress").then((value) => {
+	        this.setState({
+	          ipAddress: value
+	        })
+			this.fetchData();
+	    }).done();
 	}
 
-	// _onRefresh = () => {
-	//     this.setState({refreshing: true});
-	// 	this.setState({
-	// 		clickBtn: false,
-	// 		refreshing: false,
-	// 		earnings: '',
-	// 		email: ''	
-	// 	});
-	//  }
+	_onRefresh = () => {
+	    this.setState({refreshing: true});
+		this.setState({
+			earnings: '',
+			email: '',
+			clickBtn: '',
+			refreshing: false,
+			subscription_type: '',
+			ipAddress: ''
+		});
+		this.fetchAsync();
+	 }
+
+	componentDidMount(){
+		this.isMounted = true;
+		// if(this.isMounted){
+			// this.fetchData();
+		// }
+	}
 
 	componentDidUpdate(){
-		this.fetchData();
+		this.isMounted = true;
+		// if(this.isMounted){
+			// this.fetchData();
+		// }
 	}
 
 	componentWillUnmount(){
@@ -88,9 +106,9 @@ export default class PremiumScreen extends Component {
 
 	fetchData = async() => {
 		email = this.state.email;
+		const{ipAddress} = this.state;
 
-		// fetch("http://192.168.254.116:8000/penDetail",{  	
-	    fetch("http://192.168.83.2:8000/penDetail",{  	
+	    fetch("http://" + ipAddress + "/penDetail",{  	
 	        method: 'POST',
 	        headers: {
 	          'Content-Type': 'application/json',
@@ -109,7 +127,7 @@ export default class PremiumScreen extends Component {
 				subscription_type: responseData.detail[0].subscription_type,
 				clickBtn: false,
 			});
-			console.log(responseData)
+			this.fetchAsync();	
 		}).catch(function(error) {
 			alert('Something is wrong with the API in server')
 		});
@@ -121,8 +139,9 @@ export default class PremiumScreen extends Component {
 
 	activatePress = async() => {
 		this.setState({ clickBtn: true })
+		const{ipAddress} = this.state;
 
-	   fetch("http://192.168.83.2:8000/premiumAccount",{  	
+	   fetch("http://" + ipAddress + "/premiumAccount",{  	
 	        method: 'POST',
 	        headers: {
 	          'Content-Type': 'application/json',
@@ -154,7 +173,14 @@ export default class PremiumScreen extends Component {
 		if(this.state.subscription_type != 1){
 			if(this.state.earnings >= 0.00150000){
 				return(
-					<ScrollView>
+					<ScrollView
+						refreshControl={
+			                  <RefreshControl
+			                      onRefresh={() => this._onRefresh()}
+			                      refreshing={this.state.refreshing}
+			                  />
+			            }
+					>
 						<TouchableOpacity onPress={()=>this.props.navigation.openDrawer() } >
 							<Icon name="menu" style={styles.drawer}/>
 				        </TouchableOpacity>
@@ -212,16 +238,36 @@ export default class PremiumScreen extends Component {
 				)
 			}
 		}else{
-			return (
-				<ScrollView>
-					<TouchableOpacity onPress={()=>this.props.navigation.openDrawer() } >
-						<Icon name="menu" style={styles.drawer}/>
-			        </TouchableOpacity>
-			        <View style={styles.gif}>
-						<Image source={require('./img/congratulations.gif')}/>
-					</View>
-				</ScrollView>
-			)
+			if(widthPercentageToDP(100) <= 550){
+				return (
+					<ScrollView>
+						<TouchableOpacity onPress={()=>this.props.navigation.openDrawer() } >
+							<Icon name="menu" style={styles.drawer}/>
+				        </TouchableOpacity>
+				        <View style={styles.gifSmall}>
+							<Image source={require('./img/congratulations.gif')} style={styles.congSmall}/>
+						</View>
+						<View style={styles.unlimited}>
+							<Image source={require('./img/unlimited.jpg')}/>
+						</View>
+					</ScrollView>
+				)
+
+			}else{
+				return (
+					<ScrollView>
+						<TouchableOpacity onPress={()=>this.props.navigation.openDrawer() } >
+							<Icon name="menu" style={styles.drawer}/>
+				        </TouchableOpacity>
+				        <View style={styles.gif}>
+							<Image source={require('./img/congratulations.gif')}/>
+						</View>
+						<View style={styles.unlimited}>
+							<Image source={require('./img/unlimited.jpg')}/>
+						</View>
+					</ScrollView>
+				)
+			}
 		}
 	}
 }
@@ -233,6 +279,20 @@ const styles = StyleSheet.create({
 	gif: {
 		alignSelf: 'center',
 		marginTop: 30
+	},
+
+	gifSmall:{
+	  	width: widthPercentageToDP(10)
+	},
+
+	congSmall:{
+		// width: "250%",
+		// alignSelf: "center"
+	},
+
+	unlimited:{
+		alignSelf: 'center',
+		marginTop: 15
 	},
 
 	activate: {
@@ -308,6 +368,6 @@ const styles = StyleSheet.create({
 		color: '#110200',
 		fontWeight: 'bold',
 		marginTop: '12%',
-		fontFamily: 'serif'
+		fontFamily: 'Helvetica'
 	}
 })

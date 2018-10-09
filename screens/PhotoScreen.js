@@ -46,22 +46,25 @@ export default class PhotoScreen extends Component {
 		this.state ={
 			image: [],
 			url: '',
-			// pennyer_id: 4,
 			amtEarned: '',
 			taskName: '',
 			btasks_id: '',
 			pennyer_id: this.props.navigation.state.params.pennyer_id,
-			// pennyer_id: 1,
 			data: [],
 			isCount: 5,
 			checked: '',
-			taskPrice: '',	
+			taskPrice: '',
+			pennyer_btc: '',	
 			earnings: '',
 			hasData: '',
 			clicked: false,
 	        refreshing: false,
-	        clickBtn: false
+	        clickBtn: false,
+	        token: '',
+	        ipAddress: '',
+	        subscription_type: this.props.navigation.state.params.subscription_type
 		}
+		this.fetchIpAdd();
 	}
 
 	_onRefresh = () => {
@@ -69,31 +72,48 @@ export default class PhotoScreen extends Component {
 	    this.setState({
 	    	image: [],
 			url: '',
-			// pennyer_id: 4,
 			amtEarned: '',
 			taskName: '',
 			btasks_id: '',
 			pennyer_id: this.props.navigation.state.params.pennyer_id,
-			// pennyer_id: 1,
 			data: [],
 			isCount: 5,
 			checked: '',
 			taskPrice: '',	
+			pennyer_btc: '',
 			earnings: '',
 			hasData: '',
 			clicked: false,
 	        refreshing: false,
-	        clickBtn: false
+	        clickBtn: false,
+	        token: '',
+	        ipAddress: '',
+	        subscription_type: this.props.navigation.state.params.subscription_type
 	    })
-	    this.fetchData();
+	    this.fetchIpAdd();
+	}
+
+	fetchIpAdd = async() =>{
+		AsyncStorage.getItem("ipAddressWithNoPort").then((value) => {
+	        this.setState({
+	          ipAddress: value
+	        })
+			this.fetchData();
+			// this.fetchNotify();
+			AsyncStorage.getItem("token").then((value) => {
+	 			this.setState({token: value})
+		    }).done();
+	    }).done();
 	}
 
 	componentDidMount(){	
 		this._isMounted = true;
 		if(this._isMounted){
-			this.fetchData();
+			// this.fetchData();
+			AsyncStorage.getItem("token").then((value) => {
+	 			this.setState({token: value})
+		    }).done();
 		}
-
 	}
 
 	componentWillUnmount(){
@@ -101,17 +121,14 @@ export default class PhotoScreen extends Component {
 	}
 
 	fetchData = async() => {
-		const {pennyer_id} = this.state;
+		const {pennyer_id,ipAddress} = this.state;
 		this.setState({
 			checked: false
 		})
 
-		// const urlImage = "http://192.168.254.116/piggypenny/public/storage/pictures/";
-		const urlImage = "http://192.168.83.2/piggypenny/public/storage/pictures/";
+		const urlImage = "http://" + ipAddress + "/piggypenny/public/storage/pictures/";
 
-
-		// let resolve = await fetch('http://192.168.254.116:8000/postImage/' + pennyer_id,{
-		let resolve = await fetch('http://192.168.83.2:8000/postImage/' + pennyer_id,{
+		let resolve = await fetch("http://" + ipAddress + ":8000/postImage/" + pennyer_id,{
 			method: 'GET'
 		})
 		.then((response) => response.json())
@@ -122,7 +139,7 @@ export default class PhotoScreen extends Component {
 					amtEarned: 0.00000000.toFixed(8),
 					url: urlImage,
 					hasData: true,
-					refreshing: false
+					refreshing: false,
 				});	
 			}else{
 				this.setState({
@@ -141,7 +158,7 @@ export default class PhotoScreen extends Component {
 	}
 
 	press = (pennyer_id,btasks_id,priceEarned) =>{
-
+		const {ipAddress} = this.state;
 		var total = parseFloat(this.state.amtEarned) + parseFloat(priceEarned);
 
 		this.setState({
@@ -151,8 +168,7 @@ export default class PhotoScreen extends Component {
 			clickBtn: true
 		})
 
-		// fetch("http://192.168.254.116:8000/performImage/", {  
-		fetch("http://192.168.83.2:8000/performImage/", {  
+		fetch("http://" + ipAddress + ":8000/performImage/", {  
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -188,6 +204,7 @@ export default class PhotoScreen extends Component {
 				AsyncStorage.setItem('countImage', '1');
 			}
   		},1000);
+
 	}
 
 	done = async() => {
@@ -203,6 +220,15 @@ export default class PhotoScreen extends Component {
 	    }).done();
 	}
 
+	emptyToken(){
+		subscription_type = this.state.subscription_type;
+		if(subscription_type == 1){
+			return <Text style={styles.infoUnli}> Enjoy your unlimited browsing of images 😀.</Text>
+		}else{
+			return <Text style={styles.info}> Swipe left or right to watch photos and click LIKE to earn 20 Satoshi.You can only view 15 photos per day.</Text>
+		}
+	}
+
 	render(){
 		if(this.state.hasData){
 			return (
@@ -216,10 +242,7 @@ export default class PhotoScreen extends Component {
 				>
 					<View style={styles.cardInfo}>
 						<Card title="Eyes Here">
-							<Text style={styles.info}>
-								Swipe left or right to watch photos and click LIKE to earn 20 Satoshi. 
-								You can only earn 15 photos per day.
-							</Text>
+							{ this.emptyToken() }
 						</Card>
 					</View>
 					<View>
@@ -239,7 +262,7 @@ export default class PhotoScreen extends Component {
 						              image={{ uri: this.state.url + rowData.taskMedia }}
 						              imageStyle={ styles.card }
 					              	>
-									<TouchableOpacity onPress={()=> this.press(rowData.pennyer_id,rowData.id,rowData.task_price) }>
+									<TouchableOpacity onPress={()=> this.press(rowData.pennyer_id,rowData.id,rowData.pennyer_btc) }>
 			                     		 <FontAwesome style={styles.likeSmall}> {Icons.thumbsOUp} Like </FontAwesome>
 			                    	</TouchableOpacity> 	
 						            </Card>
@@ -251,7 +274,7 @@ export default class PhotoScreen extends Component {
 						              image={{ uri: this.state.url + rowData.taskMedia }}
 						              imageStyle={ styles.cardBig }
 					              	>
-									<TouchableOpacity onPress={()=> this.press(rowData.pennyer_id,rowData.id,rowData.task_price) }>
+									<TouchableOpacity onPress={()=> this.press(rowData.pennyer_id,rowData.id,rowData.pennyer_btc) }>
 			                     		 <FontAwesome style={styles.like}> {Icons.thumbsOUp} Like
 			                     		 </FontAwesome>
 			                    	</TouchableOpacity> 	
@@ -318,7 +341,15 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		lineHeight: 20,
 		width: '80%',
+	},
 
+	infoUnli: {
+		textAlign: 'center',
+		alignSelf:  'center',
+		justifyContent: 'center',
+		lineHeight: 20,
+		fontSize: 20,
+		width: '100%',
 	},
 
 	noDataInfo:{

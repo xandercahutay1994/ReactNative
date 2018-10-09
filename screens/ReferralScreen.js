@@ -37,13 +37,13 @@ const heightPercentageToDP = heightPercent => {
 return PixelRatio.roundToNearestPixel(screenHeight * elemHeight / 100);
 };
 
-export default class HistoryScreen extends Component {
+export default class ReferralScreen extends Component {
 
 	constructor(props){
 		super(props)
 		this.state = {
-			email: '',
-			dataHistory: '',
+			referCode: '',
+			referHistory: '',
 			tableHead: ['Taskname', 'TaskPrice', 'Date'],
 			ipAddress: ''
 		}
@@ -51,19 +51,17 @@ export default class HistoryScreen extends Component {
 	}
 
 	fetchAsync = async() => {
-		AsyncStorage.getItem("email").then((value) => {
+		AsyncStorage.getItem("referCode").then((value) => {
 	      this.setState({
-	        email: value
+	        referCode: value
 	      });
-	    }).done();
-
+	    }).done();		
 	    AsyncStorage.getItem("ipAddress").then((value) => {
 	        this.setState({
 	          ipAddress: value
 	        })
     		this.fetchData();
-			// this.checkIfRequested();
-	    }).done();		
+	    }).done();
 	}
 
 	componentDidUpdate(){
@@ -74,93 +72,79 @@ export default class HistoryScreen extends Component {
 		this.isCancelled = true;
 	}
 
+
 	fetchData = async() => {
-		const {email,ipAddress} = this.state;
+		const {referCode,ipAddress} = this.state;
 		
 		// let resolve = await fetch('http://192.168.254.116:8000/pennyerHistory/' + email,{
-		let resolve = await fetch("http://" + ipAddress + "/pennyerHistory/" + email,{
+		let resolve = await fetch("http://"+ ipAddress + "/referHistory/" + referCode,{
 			method: 'GET'
 		})
 		.then((response) => response.json())
 		.then((responseData) => {
 			!this.isCancelled && this.setState({
-				dataHistory: responseData.pennyerHistory
+				referHistory: responseData.referHistory
 			});	
 			// console.log(responseData)
 		}).catch(function(error) {
 			Alert.alert('Something is wrong with the(history) server!');
-		});
-	}
+		});    	
 
-	render() {
-		return (
+	}
+	render(){
+		return(
 			<ScrollView>
 				<Container>
 					<TouchableOpacity onPress={()=>this.props.navigation.openDrawer() } >
 						<Icon name="menu" style={styles.drawer}/>
 			        </TouchableOpacity>
 					<Content>
-						<Text style={styles.history}> Earnings History </Text>
+						<Text style={styles.history}> Referral History </Text>
 						<View style={styles.header}>	
 							<Text style={ widthPercentageToDP(100) <= 500 ? styles.namePrice : styles.namePriceBig }> Details </Text>
 							<Text style={ widthPercentageToDP(100) <= 500 ? styles.nameDate : styles.nameDateBig }> Date </Text>
 						</View>
 						<View style={styles.container}>
 							<FlatList
-					          data={this.state.dataHistory}
+					          data={this.state.referHistory}
 					          style={styles.flatlist}
 					          renderItem={({ item: rowData }) => {
-					          	let newPrice = "";
-					          	if(rowData.id == 1){
-					          		newPrice = 20;
-					          		return (
-					        			<View style={styles.details}>
-					        				<Text style={styles.taskName}>Play video "{rowData.taskName}" and earned "{newPrice} Satoshi"</Text>
-					        				<Text style={styles.petsa}>{rowData.date_per} </Text>
-			  		  	        		</View>
-			  		  	        	)
-					          	}else if(rowData.id == 2){
-					          		newPrice = 20;
-					          		return (
-  					        			<View style={styles.details}>
-					        				<Text style={styles.taskName}>Click like/photo "{rowData.taskName}" and earned "{newPrice} Satoshi"</Text>
-			  		  	        			<Text style={styles.petsa}>{rowData.date_per} </Text>
-			  		  	        		</View>
-			  		  	        	)
-					          	}else if(rowData.id == 4){
-					          		newPrice = 10;
-					        		return (
-					        			<View style={styles.details}>
-						        			<Text style={styles.taskName}>Visited survey "{rowData.taskName}" and earned "{newPrice} Satoshi"</Text>
-						        			<Text style={styles.petsa}>{rowData.date_per} </Text>
-			  		  	        		</View>
-			  		  	        	)
-			  		  	        }
-					        }}
- 				           keyExtractor={(item, index) => index.toString()}
-							/>
-						</View>
+					          	return(
+				        			<View style={styles.details}>
+				        				<Text style={styles.nameDetails}>Earned 5 Satoshi by referring {rowData.referEmail}</Text>
+				        				<Text style={styles.petsa}>{rowData.registered_at} </Text>
+		  		  	        		</View>
+					          	)
+					          }}
+					         keyExtractor={(item, index) => index.toString()}
+					        />
+					    </View> 	
 					</Content>
 				</Container>
-				
 			</ScrollView>
 		)
 	}
+
 }
 
-AppRegistry.registerComponent('HistoryScreen',()=>HistoryScreen);
+AppRegistry.registerComponent('ReferralScreen',()=>ReferralScreen);
 
 const styles = StyleSheet.create({
 	details: {
 		display:'flex'
 	},
 
-	petsa: {
-		position: 'absolute',
-		marginLeft: widthPercentageToDP(70),
+	drawer: {
+		padding: '3%'
+	},
+
+	history : {
+		fontSize: 40,
 		textAlign: 'center',
-		fontSize: 20,
-		lineHeight: 40,
+		marginBottom: '8%',
+		color: '#110200',
+		fontWeight: 'bold',
+		marginTop: '2%',
 		fontFamily: 'Helvetica'
 	},
 
@@ -173,10 +157,6 @@ const styles = StyleSheet.create({
 		display: 'flex'
 	},
 
-	flatlist: {
-		width: '30%'
-	},
-
 	header:{
 		flexDirection: 'row',
 		backgroundColor: 'black',
@@ -184,7 +164,7 @@ const styles = StyleSheet.create({
 		padding: 5
 	},
 
-	nameHeaderBig: {
+		nameHeaderBig: {
 		marginLeft: widthPercentageToDP(2),
 		fontSize: 20,
 		color: 'white'
@@ -208,6 +188,10 @@ const styles = StyleSheet.create({
 		color: 'white'
 	},
 
+	flatlist: {
+		width: '30%'
+	},
+
 	namePrice: {
 		marginLeft: widthPercentageToDP(16),
 		fontSize: 20,
@@ -222,17 +206,17 @@ const styles = StyleSheet.create({
 		flex: 1 
 	},
 
-	headerText: {
+		headerText: {
 		textAlign: 'center',
 		fontSize: 20
 	},
 
-	taskName: {
+	nameDetails: {
 		// marginLeft: widthPercentageToDP(2),
 		fontSize: 17,
 		lineHeight: 40,
 		fontFamily: 'Helvetica',
-		width: widthPercentageToDP(60)
+		width: widthPercentageToDP(58)
 	},
 
 	task_price: {
@@ -242,25 +226,12 @@ const styles = StyleSheet.create({
 		textAlign: 'center'	
 	},
 
-	clicked_at: {
+	petsa: {
+		position: 'absolute',
+		marginLeft: widthPercentageToDP(60),
 		textAlign: 'center',
 		fontSize: 20,
 		lineHeight: 40,
 		fontFamily: 'Helvetica'
 	},
-	
-	drawer: {
-		padding: '3%'
-	},
-
-	history : {
-		fontSize: 40,
-		textAlign: 'center',
-		marginBottom: '8%',
-		color: '#110200',
-		fontWeight: 'bold',
-		marginTop: '2%',
-		fontFamily: 'Helvetica'
-	}
-
 });

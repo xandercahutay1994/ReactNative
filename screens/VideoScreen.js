@@ -37,21 +37,24 @@ export default class VideoScreen extends Component {
 		this.state = {
 			image: [],
 			url: '',
-			// pennyer_id: 4,
 			amtEarned: '',
 			taskName: '',
 			btasks_id: '',
 			pennyer_id: this.props.navigation.state.params.pennyer_id,
-			// pennyer_id: 2,
 			data: [],
 			isCount: 5,
 			checked: '',
 			taskPrice: '',
+			pennyer_btc: '',
 			earnings: '',
 			hasData: '',
 			play: false,
-	        refreshing: false 
+	        refreshing: false,
+	        token: '',
+            ipAddress: '',
+	        subscription_type: this.props.navigation.state.params.subscription_type	
 		}
+		this.fetchIpAdd();
 	}
 
 	_onRefresh = () => {
@@ -59,49 +62,63 @@ export default class VideoScreen extends Component {
 		this.state = {
 			image: [],
 			url: '',
-			// pennyer_id: 4,
 			amtEarned: '',
 			taskName: '',
 			btasks_id: '',
 			pennyer_id: this.props.navigation.state.params.pennyer_id,
-			// pennyer_id: 2,
 			data: [],
 			isCount: 5,
 			checked: '',
 			taskPrice: '',
+			pennyer_btc: '',
 			earnings: '',
 			hasData: '',
 			play: false,
-	        refreshing: false 
+	        refreshing: false,
+	        token: '',
+            ipAddress: '',
+	        subscription_type: this.props.navigation.state.params.subscription_type
 		} 
-		this.fetchData();
+		this.fetchIpAdd();
+	}
+
+	fetchIpAdd = async() =>{
+		AsyncStorage.getItem("ipAddressWithNoPort").then((value) => {
+	        this.setState({
+	          ipAddress: value
+	        })
+			this.fetchData();
+			// AsyncStorage.getItem("token").then((value) => {
+	 	// 		this.setState({token: value})
+		 //    }).done();
+	    }).done();
 	}
 
 	componentDidMount(){	
 		this._isMounted = true;
 
 		if(this._isMounted){
-			this.fetchData();
+			// this.fetchData();
+			AsyncStorage.getItem("token").then((value) => {
+	 			this.setState({token: value})
+		    }).done();
 		}
 	}
 
 
 	fetchData = async() => {
-		
-		const {pennyer_id} = this.state;
+		const {pennyer_id,ipAddress} = this.state;
 		this.setState({
 			checked: false
 		})
 
-		// const urlVideo = "http://192.168.254.116/piggypenny/public/storage/videos/";
-		const urlVideo = "http://192.168.83.2/piggypenny/public/storage/videos/";
+		const urlVideo = "http://" + ipAddress + "/piggypenny/public/storage/videos/";
 
 		this.setState({
 				url: urlVideo,
 			});	
 
-		// let resolve = await fetch('http://192.168.254.116:8000/postVideo/' + pennyer_id,{
-		let resolve = await fetch('http://192.168.83.2:8000/postVideo/' + pennyer_id,{
+		let resolve = await fetch("http:" + ipAddress + ":8000/postVideo/" + pennyer_id,{
 			method: 'GET'
 		})
 		.then((response) => response.json())
@@ -123,16 +140,15 @@ export default class VideoScreen extends Component {
 		});
 	}
 
-	videoEnd = (pennyer_id,btasks_id,priceEarned) => {
+	videoEnd = (pennyer_id,btasks_id,priceEarned) => {	
 		var total = parseFloat(this.state.amtEarned) + parseFloat(priceEarned);
-
+		const {ipAddress} = this.state;
 		this.setState({
 			checked: true,
 			amtEarned: total.toFixed(8)
 		})
 
-		// fetch("http://192.168.254.116:8000/performVideo/", {  
-		fetch("http://192.168.83.2:8000/performVideo/", {  
+		fetch("http://" + ipAddress + ":8000/performVideo/", {  
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -149,7 +165,7 @@ export default class VideoScreen extends Component {
 		.then((responseData) => {
       
         }).catch(function(error) {
-          Alert.alert("Error");
+          Alert.alert("Error in earning/performing video");
         });  
 
   		this.refs.defaultToast.showToast('You earned 20 Satoshi');
@@ -168,8 +184,6 @@ export default class VideoScreen extends Component {
 				AsyncStorage.setItem('videoCount', '1');
 			}
   		},1000);
-		
-
 	}
 
 	done = async() => {
@@ -187,6 +201,27 @@ export default class VideoScreen extends Component {
 	    }).done();
 	}
 
+	emptyToken(){
+		const{subscription_type} = this.state;
+		if(subscription_type == 1){
+			return <Text style={styles.infoUnli}> Enjoy your unlimited watching of videos 😀.</Text>
+		}else{
+			return <Text style={styles.info}> Swipe left or right to watch videos and finish watching the whole video to earn 20 Satoshi. You can only view 15 photos per day.</Text>
+		}
+	}
+
+	videoName(){
+		return
+			<FlatList
+	          data={this.state.videoList}
+	          style={styles.flatlist}
+	          renderItem={({ item: rowData }) => {
+				<Text>{rowData.taskName}</Text>
+	        }}
+	           keyExtractor={(item, index) => index.toString()}
+			/>
+	}
+
 	render(){
 		if(this.state.hasData){
 			return (
@@ -201,8 +236,7 @@ export default class VideoScreen extends Component {
 					<View style={styles.cardInfo}>
 						<Card title="Eyes Here">
 							<Text style={styles.info}>
-								Swipe left or right to watch videos and finish watching the whole video to earn 20 Satoshi. 
-								You can only watch 15 videos every day.
+								{this.emptyToken()}
 							</Text>
 						</Card>
 					</View>
@@ -210,35 +244,37 @@ export default class VideoScreen extends Component {
 						<Toast ref = "defaultToast" backgroundColor = "#28a745"/>
 						{ this.state.checked == true ? <Text style={styles.timer}> {this.state.isCount} </Text> : <Text style={styles.timer}>  </Text> }
 					</View>
-					<FlatList
-				    	horizontal
-				    	showsHorizontalScrollIndicator={false}
-				        data={this.state.image}
-				        style={styles.videoList}
-				        renderItem={({ item: rowData }) => {
-			        		return (
-			        			<VideoPlayer
-								    source={{ 
-										uri: this.state.url + rowData.taskMedia,
-	       								type: 'mp4'
-								    }}
-							        disableBack
-							        disableFullscreen
-							        paused={this.state.play ? false : true} 
-							        rate={1.0}                              
-	       							volume={1.0}
-	       							onEnd={()=>this.videoEnd(rowData.pennyer_id,rowData.id,rowData.task_price)}
-	       							muted={false}
-	       							controls={true}
-	       							playIcon
-	       							playButton
-								    style={ styles.video }
-
-								/>
-		  		          );		
-				        }}
-				        keyExtractor={(item, index) => index.toString()}
-				    />
+					<View>
+						<FlatList
+					    	horizontal
+					    	showsHorizontalScrollIndicator={false}
+					        data={this.state.image}
+					        style={styles.videoList}
+					        renderItem={({ item: rowData }) => {
+			        			this.videoName();
+				        		return (
+				        			<VideoPlayer
+									    source={{ 
+											uri: this.state.url + rowData.taskMedia,
+		       								type: 'mp4'
+									    }}
+								        disableBack
+								        disableFullscreen
+								        paused={this.state.play ? false : true} 
+								        rate={1.0}                              
+		       							volume={1.0}
+		       							onEnd={()=>this.videoEnd(rowData.pennyer_id,rowData.id,rowData.pennyer_btc)}
+		       							muted={false}
+		       							controls={true}
+		       							playIcon
+		       							playButton
+									    style={ styles.video }
+									/>
+			  		          );		
+					        }}
+					        keyExtractor={(item, index) => index.toString()}
+					    />
+					</View>
 				    <TouchableOpacity onPress={ this.done }>
 					   	<FontAwesome style={styles.done}> {Icons.check} DONE </FontAwesome> 
 			        </TouchableOpacity>
@@ -349,4 +385,9 @@ const styles = StyleSheet.create({
 		marginLeft: '5%',
 		backgroundColor: 'white'
 	},
+
+	videoName: {
+		fontSize: 20,
+		color: 'blue',
+	}
 })

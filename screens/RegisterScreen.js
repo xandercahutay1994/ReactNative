@@ -28,9 +28,9 @@ export default class RegisterScreen extends Component {
         walletAddress: "",
         refCodeOptional: "",
         clickButton: false,
-        refreshing: false 
+        refreshing: false,
+        ipAddress: this.props.navigation.state.params.ipAddress
       }
-
   }
 
   static navigationOptions = {
@@ -58,11 +58,11 @@ export default class RegisterScreen extends Component {
     this.setState({ clickButton: true })
 
     var check = false;
-    const {firstname,lastname,email,password,walletAddress,refCodeOptional} = this.state;
-      if(firstname != "" && lastname != "" && email != "" && password != ""){
+    const {firstname,lastname,email,password,walletAddress,refCodeOptional,ipAddress} = this.state;
 
-        fetch("http://192.168.83.2:8000/registerPiggy",{  
-        // fetch("http://192.168.83.2:8000/registerPiggy",{  
+    if(firstname != "" && lastname != "" && email != "" && password != ""){
+
+      fetch("http://" + ipAddress +"/registerPiggy",{  
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -81,14 +81,6 @@ export default class RegisterScreen extends Component {
         .then((response) => response.json())
         .then((responseData) => {
           if(responseData.message != 500){
-            // this.setState({
-            //   firstname: firstname,
-            //   lastname: lastname,
-            //   email: email,
-            //   password: password,
-            //   walletAddress: walletAddress,
-            //   refCodeOptional: refCodeOptional
-            // });
             check = true;
             this.setState({
               firstname: "",

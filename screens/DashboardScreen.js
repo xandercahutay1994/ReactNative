@@ -29,6 +29,7 @@ import { responsiveHeight, responsiveWidth, responsiveFontSize } from 'react-nat
 import { MediaQuery, MediaQueryStyleSheet } from "react-native-responsive";
 import FontAwesome, { Icons } from 'react-native-fontawesome';
 import NotificationPopup from 'react-native-push-notification-popup';
+import { Badge } from 'react-native-elements';
 
 YellowBox.ignoreWarnings(['Warning: isMounted(...) is deprecated', 'Module RCTImageLoader']);
 
@@ -55,42 +56,77 @@ export default class DashboardScreen extends Component {
 		super(props);
 		this.state = {
 			data: [],
-			// mail: this.props.navigation.state.params.email,
-			mail: 'angelicaaliguen@gmail.com',
+			mail: this.props.navigation.state.params.email,
 			earning: '',
 			referCode: '',
 			pennyer_id: '',
 			isLoading: false,
 			refreshing: false,
-			notifyCount: ''
+			notifyCount: '',
+			notify: [],
+			notificationId: '',
+			withPennyerId: '',
+			withdrawalAmt: '',
+			referHistory: [],
+			refCount: '',
+			penRewards: [],
+			rewardCount: '',
+			subscription_type: '',
+			ipAddress: "",
+			referEarnings: "",
+			notificationCount: 0,
+			admin: 'admin'
+
 		}, () => {
 	  		AsyncStorage.setItem("email", this.state.mail);
 		}
+  		this.fetchIpAdd();
 	}
 
 	_onRefresh = () => {
 	    this.setState({refreshing: true});
 	    this.setState({
 			data: [],
-			// mail: this.props.navigation.state.params.email,
-			// mail: 'xandercahutay1994@gmail.com',
-			mail: 'angelicaaliguen@gmail.com',
+			mail: this.props.navigation.state.params.email,
 			earning: '',
 			referCode: '',
 			pennyer_id: '',
 			isLoading: false,
 			refreshing: false,
-			notifyCount: ''
+			notifyCount: '',
+			notify: [],
+			notificationId: '',
+			withPennyerId: '',
+			withdrawalAmt: '',
+			referHistory: [],
+			refCount: '',
+			penRewards: [],
+			rewardCount: '',
+			subscription_type: '',
+			ipAddress: "",
+			referEarnings: "",
+			notificationCount: 0,
+			admin: 'admin'
 	    })
-	    // this.fetchData();
+	    this.fetchData();
+	    this.fetchIpAdd();
 	    this.componentDidMount();
 	    this.setState({refreshing: false});
 	}
 
+	fetchIpAdd = async() =>{
+		AsyncStorage.getItem("ipAddress").then((value) => {
+	        this.setState({
+	          ipAddress: value
+	        })
+			this.fetchData();
+			this.fetchNotify();
+	    }).done();
+	}
+
 	componentDidMount() {
+		this.fetchIpAdd();
      	this._isMounted = true;
-		this.fetchData();
-		this.fetchNotify();
     }
 
     componentWillUnmount(){
@@ -99,10 +135,8 @@ export default class DashboardScreen extends Component {
     }
 
     pop = () => {
-    	// console.log(this.state.token);
-    	const token = this.state.token;
     	if(this.state.token && this.state.token.length > 0){
-		 	!this._isMounted && this.popup.show({
+		 	this._isMounted && this.popup.show({
 			    onPress: function() {console.log('Pressed')},
 			    appTitle: 'Reminder',
 			    timeText: 'Now',
@@ -113,14 +147,11 @@ export default class DashboardScreen extends Component {
     }
 
 	fetchData = async() => {
-		// AsyncStorage.getItem("email").then((value) => {
-	 //      console.log(value);
-	 //    }).done();
-	 	
-
+		
 		email = this.state.mail;
-	 	// fetch("http://192.168.254.116:8000/penDetail",{  
-        fetch("http://192.168.83.2:8000/penDetail",{  	
+		const{ipAddress} = this.state;
+
+        fetch("http://" + ipAddress + "/penDetail",{  	
 	        method: 'POST',
 	        headers: {
 	          'Content-Type': 'application/json',
@@ -138,12 +169,17 @@ export default class DashboardScreen extends Component {
 					earning: responseData.detail[0].totalEarned.toFixed(8),
 					referCode: responseData.detail[0].referCode,
 					pennyer_id: responseData.detail[0].id,
-					token: responseData.detail[0].token
+					token: responseData.detail[0].token,
+					subscription_type: responseData.detail[0].subscription_type
 				});
 				this.pop();
 				AsyncStorage.setItem("earnings", this.state.earning);
 				AsyncStorage.setItem('referCode', responseData.detail[0].referCode);
 				AsyncStorage.setItem('pen_id', this.state.pennyer_id.toString());
+				AsyncStorage.setItem('token', this.state.token);	
+				AsyncStorage.setItem('subscription_type', this.state.subscription_type);	
+				this.fetchHistory();
+				this.fetchReward();
 			}
 		}).catch(function(error) {
 			alert('Dashboard Screen has an error in the server')
@@ -154,12 +190,35 @@ export default class DashboardScreen extends Component {
 		// },2500);
     }
 
-    fetchNotify = async() => {
-		email = "angelicaaliguen@gmail.com";
+    fetchHistory =  async() => {
+    	const {pennyer_id,ipAddress,admin} = this.state;
+    	// alert(pennyer_id);
 
-		// alert(this.state.pennyer_id)
-	 	// fetch("http://192.168.254.116:8000/penDetail",{  
-        fetch("http://192.168.83.2:8000/sendNotificationToPennyer",{  	
+    	let resolve = await fetch("http://" + ipAddress + "/paidReferral/" + pennyer_id + '/' + admin,{
+			method: 'GET'
+		})
+		.then((response) => response.json())
+		.then((responseData) => {
+			// if(!this.isCancelled){
+				if(responseData != ""){
+					this.setState({
+						refCount: 1,
+						referEarnings: responseData.referEarnings
+					});
+				}
+			// }
+				
+		}).catch(function(error) {
+			Alert.alert('Something is wrong with the(referral history) server!');
+		});
+    }
+
+    // withdrawal
+    fetchNotify = async() => {
+		email = this.state.mail;
+		const{ipAddress} = this.state;
+
+        fetch("http://" + ipAddress + "/sendNotificationToPennyer",{  	
 	        method: 'POST',
 	        headers: {
 	          'Content-Type': 'application/json',
@@ -172,40 +231,162 @@ export default class DashboardScreen extends Component {
 		})
 		.then((response) => response.json())
 		.then((responseData) => {
-			if(this._isMounted){
-				this.setState({ notifyCount: responseData.length});
-				console.log(responseData.length);
-			}
-		}).catch(function(error) {
-			alert('Dashboard Notification has an error in the server')
+				if(responseData.length > 0){
+					this.setState({ 
+						notifyCount: parseInt(responseData.length),
+						notify: responseData,
+						notificationCount: responseData.length 
+					});
+
+					this.state.notify.map((data,i)=>{
+						this.setState({ 
+							withdrawalAmt: data.withdrawal_amt,
+							notificationId: data.id,
+							withPennyerId: data.pennyer_id
+						})
+					});
+				}
+			// }
+		}).catch(function(error	) {
+			alert('Fetch Notification has an error in the server')
 		});    	
     }
+
+    // daily reward OKAY NAH
+    fetchReward =  async() => {
+    	const {pennyer_id,ipAddress} = this.state;
+
+    	let resolve = await fetch("http://" + ipAddress + "/getReward/" + pennyer_id,{
+			method: 'GET'
+		})
+		.then((response) => response.json())
+		.then((responseData) => {
+			// alert(responseData.length);
+			// if(this.isMounted){
+				this.setState({
+				// 	penRewards: responseData,
+					rewardCount: responseData.length,
+				});
+			// }
+		}).catch(function(error) {
+			Alert.alert('Something is wrong with the(reward history) server!');
+		});
+    
+		this.setState({
+			notificationCount: this.state.refCount + this.state.rewardCount
+		});
+    }
+
 	photoFunc = async(pennyer_id) => {
-		this.props.navigation.navigate('Photo', {pennyer_id: pennyer_id});
+		if(this.state.token != null)
+			this.verifyAccount();
+		else
+			this.props.navigation.navigate('Photo', {pennyer_id: pennyer_id, subscription_type: this.state.subscription_type});
 	}
 
-	// this.props.navigation.state.params.mail
 	videoFunc = async(pennyer_id) => {
-		this.props.navigation.navigate('Video', {pennyer_id: pennyer_id});
+		if(this.state.token != null)
+			this.verifyAccount();
+		else
+			this.props.navigation.navigate('Video', {pennyer_id: pennyer_id, subscription_type: this.state.subscription_type});
 	}
 
 	surFunc = (pennyer_id) => {
-		this.props.navigation.navigate('Survey', {pennyer_id: pennyer_id});
-		// this.props.navigate('DrawerOpen');
+		if(this.state.token != null)
+			this.verifyAccount();
+		else
+			this.props.navigation.navigate('Survey', {pennyer_id: pennyer_id, subscription_type: this.state.subscription_type});
 	}
 
 	refFunc = (referCode) => {
-		// Alert.alert("Your referral code is " + this.state.referCode);
-		this.props.navigation.navigate('Refer', {referCode: referCode});
+		if(this.state.token != null)
+			this.verifyAccount();
+		else
+			this.props.navigation.navigate('Refer', {referCode: referCode });
 	}
 
 	sideBar = async () => {
 		this.props.navigation.openDrawer();	
 	}
 
+	verifyAccount = async() => {
+		alert("Verify first the code we sent to your Gmail Account before making any transaction!Thanks 😀");			
+	}
+
 	showNotification = () => {
-		Alert.alert('hello');
-		console.log('hello')
+		notificationId = this.state.notificationId; 
+		referCode = this.state.referCode;
+		pennyer_id = this.state.pennyer_id;
+		const{ipAddress} = this.state;
+
+		if(!this.isCancelled){
+			fetch("http://" + ipAddress + "/updateWithdrawalStatus",{  	
+		        method: 'POST',
+		        headers: {
+		          'Content-Type': 'application/json',
+		          'Accept': 'application/json',
+		          'X-CSRF-TOKEN': '2FlY6xB8pIYOJMXdliOL3w5qcLdSN3DVne1xb1sI'
+		        },
+		        body: JSON.stringify({
+		        	notificationId
+		        })  
+			})
+			.then((response) => response.json())
+			.then((responseData) => {
+				if(this.state.notify != ""){
+					alert("Hello!The amount of " + this.state.withdrawalAmt + " Satoshi that you requested to withdraw has been successfully sent to your Coins.ph account!Thank you 😀");
+				}
+
+			}).catch(function(error) {
+				alert('Update Notification has an error in the server')
+			});  
+
+			fetch("http://" + ipAddress + "/updateRefHistory",{  	
+		        method: 'POST',
+		        headers: {
+		          'Content-Type': 'application/json',
+		          'Accept': 'application/json',
+		          'X-CSRF-TOKEN': '2FlY6xB8pIYOJMXdliOL3w5qcLdSN3DVne1xb1sI'
+		        },
+		        body: JSON.stringify({
+		        	referCode
+		        })  
+			})
+			.then((response) => response.json())
+			.then((responseData) => {
+				referEarnings = this.state.referEarnings;
+				if(referEarnings != ""){
+					alert("You earned a total of " +  referEarnings + " Satoshi for a successfull referral!Congratulations 😀");
+				}
+			}).catch(function(error) {
+				alert('Update Notification has an error in the server')
+			});    	
+
+	     
+			fetch("http://" + ipAddress + "/postReward",{  	
+		        method: 'POST',
+		        headers: {
+		          'Content-Type': 'application/json',
+		          'Accept': 'application/json',
+		          'X-CSRF-TOKEN': '2FlY6xB8pIYOJMXdliOL3w5qcLdSN3DVne1xb1sI'
+		        },
+		        body: JSON.stringify({
+		        	pennyer_id
+		        })  
+			})
+			.then((response) => response.json())
+			.then((responseData) => {
+				let reward = responseData * 5;
+
+				if(reward >= 1){
+					alert("You got a daily total reward of " + reward + " Satoshi!Congratulations 😀");
+				}
+			}).catch(function(error) {
+				alert('Update referral has an error in the server')
+			});    	
+			this.fetchIpAdd();
+		}
+		this.fetchIpAdd();
 	}
 
 	render() {
@@ -227,8 +408,14 @@ export default class DashboardScreen extends Component {
 							<Icon name="menu" style={styles.menu}/>
 				        </TouchableOpacity>
 				        <Text style={styles.dashboard}> Dashboard </Text>
-				        <FontAwesome style={styles.globe}> {Icons.bell} </FontAwesome>
-						<Text style={styles.sat}> {this.state.earning} </Text>
+				        <TouchableOpacity onPress={this.showNotification}  style={styles.showNotification}>
+			        		<FontAwesome style={styles.bell}> {Icons.bell} </FontAwesome>
+			        		<Badge
+							  value={this.state.notificationCount}
+							  textStyle={styles.notifyCount}
+							/>
+						</TouchableOpacity>
+						<Text style={styles.sat}> {this.state.earning}</Text>
 					</View>
 					<View style={styles.appContainer}>
 						<Text style={styles.install}> * 20 Satoshi </Text>
@@ -272,70 +459,146 @@ export default class DashboardScreen extends Component {
 				</ScrollView>
 			);
 		}else{
-			return (
-				<ScrollView
-					refreshControl={
-	                  <RefreshControl
-	                      onRefresh={() => this._onRefresh()}
-	                      refreshing={this.state.refreshing}
-	                  />
-		           	}
-				>
-					<View style={styles.header}>
-						<TouchableOpacity onPress={this.sideBar } >
-							<Icon name="menu" style={styles.menu}/>
-				        </TouchableOpacity>
-				        <Text style={styles.dashboard}> Dashboard </Text>
-				        <TouchableOpacity onPress={this.showNotification}  style={styles.showNotification}>
-			        		<FontAwesome style={styles.bell}> {Icons.bell} </FontAwesome>
-							<Text style={styles.notifyCount}> {this.state.notifyCount} </Text>
-						</TouchableOpacity>
-						<Text style={styles.sat}> {this.state.earning}</Text>
-					</View>
-					<View style={styles.container}>
-				        <NotificationPopup ref={ref => this.popup = ref} style={styles.popup}/>
-			        </View>
-					<View style={styles.appContainer}>
-						<Text style={styles.install}> * 20 Satoshi </Text>
-						<View style={styles.installText}>
-							<Image source={require('./img/app.png')} style={styles.installImg}/>
-						</View>
-						<Text style={styles.app}> Install Apps </Text>
-					</View>
-					<View style={styles.mediaContainer}>
-						<View style={styles.mediaBody}>
-							<TouchableOpacity onPress={()=>this.videoFunc(this.state.pennyer_id)} activeOpacity = { .5 }>
-								<Image source={require('./img/videoclip.png')} style={styles.mediaVid}/>
+			if(this.state.token != null || this.state.subscription_type == 0){
+				return (
+					<ScrollView
+						refreshControl={
+		                  <RefreshControl
+		                      onRefresh={() => this._onRefresh()}
+		                      refreshing={this.state.refreshing}
+		                  />
+			           	}
+					>
+						<View style={styles.header}>
+							<TouchableOpacity onPress={this.sideBar } >
+								<Icon name="menu" style={styles.menu}/>
+					        </TouchableOpacity>
+					        <Text style={styles.dashboard}> Dashboard </Text>
+					        <TouchableOpacity onPress={this.showNotification}  style={styles.showNotification}>
+				        		<FontAwesome style={styles.bell}> {Icons.bell} </FontAwesome>
+				        		<Badge
+	  							  value={this.state.notificationCount}
+								  textStyle={styles.notifyCount}
+								/>
 							</TouchableOpacity>
-							<TouchableOpacity onPress={()=>this.photoFunc(this.state.pennyer_id)} activeOpacity = { .5 }>
-								  	<Image source={require('./img/m15.png')} style={styles.mediaImgBig} />
+							<Text style={styles.sat}> {this.state.earning}</Text>
+						</View>
+						<View style={styles.container}>
+					        <NotificationPopup ref={ref => this.popup = ref} style={styles.popup}/>
+				        </View>
+						<View style={styles.appContainer}>
+							<Text style={styles.install}> * 20 Satoshi </Text>
+							<View style={styles.installText}>
+								<Image source={require('./img/app.png')} style={styles.installImg}/>
+							</View>
+							<Text style={styles.app}> Install Apps </Text>
+						</View>
+						<View style={styles.mediaContainer}>
+							<View style={styles.mediaBody}>
+								<TouchableOpacity onPress={()=>this.videoFunc(this.state.pennyer_id)} activeOpacity = { .5 }>
+									<Image source={require('./img/videoclip.png')} style={styles.mediaVid}/>
+								</TouchableOpacity>
+								<TouchableOpacity onPress={()=>this.photoFunc(this.state.pennyer_id)} activeOpacity = { .5 }>
+									  	<Image source={require('./img/m15.png')} style={styles.mediaImgBig} />
+								</TouchableOpacity>
+							</View>
+							<View style={styles.mediaBody}>
+								<Text style={styles.video}> Watch Videos </Text>
+								<Text style={styles.photoBig}> Watch Photos </Text>
+							</View>
+						</View>
+						<View style={styles.mediaContainerLast}>
+							<View style={styles.media}>
+								<Text style={styles.surveySatBig}> * 10 Satoshi </Text>
+								<Text style={styles.referSatBig}> * 5 Satoshi </Text>
+							</View>
+							<View style={styles.mediaBodyImg}>
+								<TouchableOpacity onPress={()=>this.surFunc(this.state.pennyer_id)} activeOpacity = { .5 }>
+									<Image source={require('./img/survey2.png')} style={styles.mediaSurvey}/>
+								</TouchableOpacity>
+								<TouchableOpacity onPress={()=>this.refFunc(this.state.referCode)} activeOpacity = { .5 }>
+									<Image source={require('./img/refer.png')} style={styles.mediaReferBig}/>
+								</TouchableOpacity>
+							</View>
+							<View style={styles.mediaBodyLast}>
+								<Text style={styles.takeSurveyBig}> Take Surveys </Text>
+								<Text style={styles.referFriendBig}> Invite Friends </Text>
+							</View>
+						</View>
+					</ScrollView>
+				)
+			}else{
+				return (
+					<ScrollView
+						refreshControl={
+		                  <RefreshControl
+		                      onRefresh={() => this._onRefresh()}
+		                      refreshing={this.state.refreshing}
+		                  />
+			           	}
+					>
+						<View style={styles.header}>
+							<TouchableOpacity onPress={this.sideBar } >
+								<Icon name="menu" style={styles.menu}/>
+					        </TouchableOpacity>
+					        <Text style={styles.dashboard}> Dashboard </Text>
+					        <TouchableOpacity onPress={this.showNotification}  style={styles.showNotification}>
+				        		<FontAwesome style={styles.bell}> {Icons.bell} </FontAwesome>
+				        		<Badge
+	  							  value={this.state.notificationCount + this.state.refCount}
+								  textStyle={styles.notifyCount}
+								/>
 							</TouchableOpacity>
+							<Text style={styles.sat}> {this.state.earning}</Text>
 						</View>
-						<View style={styles.mediaBody}>
-							<Text style={styles.video}> Watch Videos </Text>
-							<Text style={styles.photoBig}> Watch Photos </Text>
+						<View style={styles.container}>
+					        <NotificationPopup ref={ref => this.popup = ref} style={styles.popup}/>
+				        </View>
+				        <View>
+				        <Text style={styles.premium}> {this.state.subscription_type == 1 ? '* PREMIUM ACCOUNT *' : ''} </Text>
+				        </View>
+						<View style={styles.appContainer}>
+							<Text style={styles.install}> * 20 Satoshi </Text>
+							<View style={styles.installText}>
+								<Image source={require('./img/app.png')} style={styles.installImg}/>
+							</View>
+							<Text style={styles.app}> Install Apps </Text>
 						</View>
-					</View>
-					<View style={styles.mediaContainerLast}>
-						<View style={styles.media}>
-							<Text style={styles.surveySatBig}> * 10 Satoshi </Text>
-							<Text style={styles.referSatBig}> * 5 Satoshi </Text>
+						<View style={styles.mediaContainer}>
+							<View style={styles.mediaBody}>
+								<TouchableOpacity onPress={()=>this.videoFunc(this.state.pennyer_id)} activeOpacity = { .5 }>
+									<Image source={require('./img/videoclip.png')} style={styles.mediaVid}/>
+								</TouchableOpacity>
+								<TouchableOpacity onPress={()=>this.photoFunc(this.state.pennyer_id)} activeOpacity = { .5 }>
+									  	<Image source={require('./img/m15.png')} style={styles.mediaImgBig} />
+								</TouchableOpacity>
+							</View>
+							<View style={styles.mediaBody}>
+								<Text style={styles.video}> Watch Videos </Text>
+								<Text style={styles.photoBig}> Watch Photos </Text>
+							</View>
 						</View>
-						<View style={styles.mediaBodyImg}>
-							<TouchableOpacity onPress={()=>this.surFunc(this.state.pennyer_id)} activeOpacity = { .5 }>
-								<Image source={require('./img/survey2.png')} style={styles.mediaSurvey}/>
-							</TouchableOpacity>
-							<TouchableOpacity onPress={()=>this.refFunc(this.state.referCode)} activeOpacity = { .5 }>
-								<Image source={require('./img/refer.png')} style={styles.mediaReferBig}/>
-							</TouchableOpacity>
+						<View style={styles.mediaContainerLast}>
+							<View style={styles.media}>
+								<Text style={styles.surveySatBig}> * 10 Satoshi </Text>
+								<Text style={styles.referSatBig}> * 5 Satoshi </Text>
+							</View>
+							<View style={styles.mediaBodyImg}>
+								<TouchableOpacity onPress={()=>this.surFunc(this.state.pennyer_id)} activeOpacity = { .5 }>
+									<Image source={require('./img/survey2.png')} style={styles.mediaSurvey}/>
+								</TouchableOpacity>
+								<TouchableOpacity onPress={()=>this.refFunc(this.state.referCode)} activeOpacity = { .5 }>
+									<Image source={require('./img/refer.png')} style={styles.mediaReferBig}/>
+								</TouchableOpacity>
+							</View>
+							<View style={styles.mediaBodyLast}>
+								<Text style={styles.takeSurveyBig}> Take Surveys </Text>
+								<Text style={styles.referFriendBig}> Invite Friends </Text>
+							</View>
 						</View>
-						<View style={styles.mediaBodyLast}>
-							<Text style={styles.takeSurveyBig}> Take Surveys </Text>
-							<Text style={styles.referFriendBig}> Invite Friends </Text>
-						</View>
-					</View>
-				</ScrollView>
-			)
+					</ScrollView>
+				)
+			}
 		}
 	}
 }
@@ -350,19 +613,31 @@ AppRegistry.registerComponent('DashboardScreen',()=>DashboardScreen)
 
 const styles = MediaQueryStyleSheet.create({
 
+	premium :{
+		fontSize: 30,
+		fontWeight: 'bold',
+		color: 'green',
+		textAlign: 'center',
+		margin: 3
+	},
+
+	notPremium: {  
+
+	},
+
 	notifyCount: {
 		// backgroundColor: 'red',
 		color: 'red',
 		// bottom: 18,
 		// margin: -5,
 		// bottom: 3,
-		marginTop: 7,
-		marginLeft: -18,
+		// marginTop: 17,
+		// marginLeft: -2,
 		fontSize: 20,
 		fontWeight: 'bold',
-		width: 17,
-		height: 24,
-		// borderRadius: 10
+		// width: 8,
+		// height: 15,
+		borderRadius: 10
 	},
 
 	container: {
@@ -397,9 +672,9 @@ const styles = MediaQueryStyleSheet.create({
 		fontWeight: '100',
 		color: 'white',
 		// right: 135,
-		marginTop: 19,	
+		marginTop: 20,	
 		fontSize: 20,
-	
+		left: 19
 	},
 
 	globe: {
@@ -466,7 +741,7 @@ const styles = MediaQueryStyleSheet.create({
 		flexDirection:'row', 
 		flexWrap: 'wrap',
         alignSelf: 'center',
-        marginTop: 20
+        marginTop: 30
 	},
 
 	media: {

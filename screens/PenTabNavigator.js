@@ -24,13 +24,14 @@ import SettingScreen from './SettingScreen';
 import PasswordScreen from './PasswordScreen';
 import HistoryScreen from './HistoryScreen';
 import WithdrawalHistoryScreen from './WithdrawalHistoryScreen';
-
+import ReferralScreen from './ReferralScreen';
 
 export default createBottomTabNavigator ({
   Details: SettingScreen,
   Password: PasswordScreen,
   Earnings: HistoryScreen,
-  'Withdrawal History': WithdrawalHistoryScreen,
+  'Withdrawal': WithdrawalHistoryScreen,
+  Referral: ReferralScreen
 },
 {
 	navigationOptions: ({ navigation }) => ({

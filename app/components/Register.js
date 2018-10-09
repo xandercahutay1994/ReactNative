@@ -26,7 +26,8 @@ export default class Register extends Component {
         email: "",
         password: "",
         walletAddress: "",
-        code: ""
+        code: "",
+        ipAddress: this.props.navigation.state.params.ipAddress
       }
   }
 
@@ -34,7 +35,7 @@ export default class Register extends Component {
   registerPress = async() => {
     const {firstname,lastname,email,password,walletAddress,code} = this.state;
       if(firstname != "" && lastname != "" && email != "" && password != ""){
-        fetch("http://192.168.254.116:8000/registerPiggy",{
+        fetch("http://" + this.state.ipAddress + "/registerPiggy",{
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -56,14 +57,14 @@ export default class Register extends Component {
           Alert.alert("Error");
         });  
 
-        this.setState({
-          firstname: "",
-          lastname: "",
-          email: "",
-          password: "",
-          walletAddress: "",
-          code: ""
-        });
+        // this.setState({
+        //   firstname: "",
+        //   lastname: "",
+        //   email: "",
+        //   password: "",
+        //   walletAddress: "",
+        //   code: ""
+        // });
         // Alert.alert("Successfully Registered");
     }else{
       Alert.alert('Please fill all fields');

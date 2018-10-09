@@ -42,7 +42,8 @@ export default class WithdrawalHistoryScreen extends Component {
 		super(props)
 		this.state = {
 			pennyer_id: '',
-			withHistory: ''
+			withHistory: '',
+			ipAddress: ''
 		}	
 		this.fetchAsync()
 	}
@@ -53,21 +54,27 @@ export default class WithdrawalHistoryScreen extends Component {
 	        pennyer_id: value
 	      });
 	    }).done();		
+		AsyncStorage.getItem("ipAddress").then((value) => {
+	        this.setState({
+	          ipAddress: value
+	        })
+    		this.fetchData();
+			// this.checkIfRequested();
+	    }).done();	
 	}
 
 	componentDidUpdate(){
-		this.fetchData();
+		// this.fetchData();
 	}
 
 	componentWillUnmount(){
 		this.isCancelled = true;
 	}
 
-	fetchData = async() => {
-		const {pennyer_id} = this.state;
+	fetchData = async() => {	
+		const {pennyer_id,ipAddress} = this.state;
 		
-		// let resolve = await fetch('http://192.168.254.116:8000/approvedWithdRequest/' + pennyer_id,{
-		let resolve = await fetch('http://192.168.83.2:8000/approvedWithdRequest/' + pennyer_id,{
+		let resolve = await fetch("http://" + ipAddress + "/approvedWithdRequest/" + pennyer_id,{
 			method: 'GET'
 		})
 		.then((response) => response.json())
@@ -138,14 +145,14 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 		fontSize: 20,
 		lineHeight: 40,
-		fontFamily: 'serif'
+		fontFamily: 'Helvetica'
 	},
 
 	requested_at: {
 		textAlign: 'center',
 		fontSize: 20,
 		lineHeight: 40,
-		fontFamily: 'serif',
+		fontFamily: 'Helvetica',
 	},
 
 	header:{
@@ -195,7 +202,7 @@ const styles = StyleSheet.create({
 		color: '#110200',
 		fontWeight: 'bold',
 		marginTop: '2%',
-		fontFamily: 'serif'
+		fontFamily: 'Helvetica'
 	},
 
 	historyBig : {
@@ -205,7 +212,7 @@ const styles = StyleSheet.create({
 		color: '#110200',
 		fontWeight: 'bold',
 		marginTop: '2%',
-		fontFamily: 'serif'
+		fontFamily: 'Helvetica'
 	}
 
 })
